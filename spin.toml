@@ -1,6 +1,20 @@
-spin_manifest_version = "1"
+spin_manifest_version = 2
+
+[application]
 authors = ["itowlson <ivan.towlson@fermyon.com>"]
 description = ""
 name = "cenote-ai"
-trigger = { type = "http", base = "/" }
 version = "0.1.0"
+
+[[trigger.http]]
+route = "/meeting-created"
+component = "on-meeting-created"
+
+[component.on-meeting-created]
+source = "on-meeting-created/target/wasm32-wasip1/release/on_meeting_created.wasm"
+allowed_outbound_hosts = []
+key_value_stores = ["default"]
+[component.on-meeting-created.build]
+command = "cargo build --target wasm32-wasip1 --release"
+workdir = "on-meeting-created"
+watch = ["src/**/*.rs", "Cargo.toml"]
