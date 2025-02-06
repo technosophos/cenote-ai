@@ -1,7 +1,7 @@
 [package]
-name = "on-meeting-created"
+name = "on-cron"
 authors = ["itowlson <ivan.towlson@fermyon.com>"]
-description = "Webhook for Notion to call when a meeting is created"
+description = "Cron job callback"
 version = "0.1.0"
 rust-version = "1.78"
 edition = "2021"
@@ -15,5 +15,6 @@ serde = { version = "1.0.217", features = ["derive"] }
 serde_json = "1.0.138"
 spin-sdk = "3.1.0"
 cenote-dtos = { path = "../cenote-dtos" }
+chrono = "0.4.39"
 
 [workspace]

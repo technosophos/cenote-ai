@@ -6,6 +6,10 @@ description = ""
 name = "cenote-ai"
 version = "0.1.0"
 
+[variables]
+notion_db_id = { required = true, secret = true }
+notion_api_key = { required = true, secret = true }
+
 [[trigger.http]]
 route = "/meeting-created"
 component = "on-meeting-created"
@@ -17,4 +21,20 @@ key_value_stores = ["default"]
 [component.on-meeting-created.build]
 command = "cargo build --target wasm32-wasip1 --release"
 workdir = "on-meeting-created"
+watch = ["src/**/*.rs", "Cargo.toml"]
+
+[[trigger.http]]
+route = "/on-cron"
+component = "on-cron"
+
+[component.on-cron]
+source = "on-cron/target/wasm32-wasip1/release/on_cron.wasm"
+allowed_outbound_hosts = ["https://api.notion.com"]
+key_value_stores = ["default"]
+[component.on-cron.variables]
+notion_db_id = "{{ notion_db_id }}"
+notion_api_key = "{{ notion_api_key }}"
+[component.on-cron.build]
+command = "cargo build --target wasm32-wasip1 --release"
+workdir = "on-cron"
 watch = ["src/**/*.rs", "Cargo.toml"]

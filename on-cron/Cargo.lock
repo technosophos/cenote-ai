@@ -327,11 +327,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "on-meeting-created"
+name = "on-cron"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "cenote-dtos",
+ "chrono",
  "serde",
  "serde_json",
  "spin-sdk",
