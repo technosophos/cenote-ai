@@ -44,7 +44,7 @@ impl SlackClient {
             ts: Some(message_ts),
             ..Default::default()
         };
-        self.post("update", req).await?;
+        self.post("chat.update", req).await?;
         Ok(())
     }
 
