@@ -15,7 +15,7 @@ async fn handle_on_meeting_created(req: Request) -> anyhow::Result<impl IntoResp
 
     println!("CREATING A SLACK MESSAGE with meeting name {}", body.meeting_name());
     let slack_client = slack::SlackClient::from_variable()?;
-    let slack_id = slack_client.post_message("team-yelling".to_owned(), body.meeting_name().to_owned(), None).await;
+    let slack_id = slack_client.post_message("C08BV2B875J".to_owned(), body.meeting_name().to_owned(), None).await;
     println!("MESSAGE CREATED: ts = {slack_id:?}");
 
     let mtg_record = MeetingInProgress {

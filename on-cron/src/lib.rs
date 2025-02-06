@@ -112,9 +112,9 @@ async fn update_slack(meeting: &mut MeetingInProgress, db_page: &WebhookData) ->
     let slack_client = cenote_dtos::slack::SlackClient::from_variable()?;
     let text = format!("{}\n\n{}", db_page.meeting_name(), db_page.ai_summary().unwrap_or_default());
     match meeting.slack_id.as_ref() {
-        Some(ts) => { slack_client.update("team-yelling".to_owned(), ts.to_owned(), text).await?; }
+        Some(ts) => { slack_client.update("C08BV2B875J".to_owned(), ts.to_owned(), text).await?; }
         None => {
-            let slack_id = slack_client.post_message("team-yelling".to_owned(), text, None).await;
+            let slack_id = slack_client.post_message("C08BV2B875J".to_owned(), text, None).await;
             println!("Slack TS {slack_id:?}");
             meeting.slack_id = slack_id.ok();
         }
