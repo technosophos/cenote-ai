@@ -17,8 +17,10 @@ component = "on-meeting-created"
 
 [component.on-meeting-created]
 source = "on-meeting-created/target/wasm32-wasip1/release/on_meeting_created.wasm"
-allowed_outbound_hosts = []
+allowed_outbound_hosts = ["https://slack.com"]
 key_value_stores = ["default"]
+[component.on-meeting-created.variables]
+slack_token = "{{ slack_token }}"
 [component.on-meeting-created.build]
 command = "cargo build --target wasm32-wasip1 --release"
 workdir = "on-meeting-created"
@@ -30,11 +32,12 @@ component = "on-cron"
 
 [component.on-cron]
 source = "on-cron/target/wasm32-wasip1/release/on_cron.wasm"
-allowed_outbound_hosts = ["https://api.notion.com"]
+allowed_outbound_hosts = ["https://api.notion.com", "https://slack.com"]
 key_value_stores = ["default"]
 [component.on-cron.variables]
 notion_db_id = "{{ notion_db_id }}"
 notion_api_key = "{{ notion_api_key }}"
+slack_token = "{{ slack_token }}"
 [component.on-cron.build]
 command = "cargo build --target wasm32-wasip1 --release"
 workdir = "on-cron"

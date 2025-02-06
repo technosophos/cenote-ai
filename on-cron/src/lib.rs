@@ -20,7 +20,7 @@ async fn handle_on_cron(_req: Request) -> anyhow::Result<impl IntoResponse> {
     let notion_ids = store.get_keys()?;
 
     for notion_id in &notion_ids {
-        if let Err(e) = update_or_gc(&store, notion_id, &notion_db) {
+        if let Err(e) = update_or_gc(&store, notion_id, &notion_db).await {
             println!("Error updating {notion_id}: {e:?}");
         }
     }
@@ -58,7 +58,7 @@ struct NotionDb {
     results: Vec<WebhookData>,
 }
 
-fn update_or_gc(store: &spin_sdk::key_value::Store, notion_id: &str, notion_db: &NotionDb) -> anyhow::Result<()> {
+async fn update_or_gc(store: &spin_sdk::key_value::Store, notion_id: &str, notion_db: &NotionDb) -> anyhow::Result<()> {
     let mut meeting: MeetingInProgress = match store.get_json(notion_id) {
         Err(e) => {
             gc(store, notion_id);
@@ -98,7 +98,7 @@ fn update_or_gc(store: &spin_sdk::key_value::Store, notion_id: &str, notion_db: 
     }
 
     // IF WE ARE HERE THEN THERE IS NEW STUFF!
-    update_slack(&mut meeting, &db_page);
+    update_slack(&mut meeting, &db_page).await?;
 
     meeting.last_edited_time = db_page.last_edited_time().to_owned();
 
@@ -107,10 +107,22 @@ fn update_or_gc(store: &spin_sdk::key_value::Store, notion_id: &str, notion_db: 
     Ok(())
 }
 
-fn update_slack(meeting: &mut MeetingInProgress, db_page: &WebhookData) {
+async fn update_slack(meeting: &mut MeetingInProgress, db_page: &WebhookData) -> anyhow::Result<()> {
     println!("UPDATING SLACK with meeting name {} and summary {:?}", db_page.meeting_name(), db_page.ai_summary());
+    let slack_client = cenote_dtos::slack::SlackClient::from_variable()?;
+    let text = format!("{}\n\n{}", db_page.meeting_name(), db_page.ai_summary().unwrap_or_default());
+    match meeting.slack_id.as_ref() {
+        Some(ts) => { slack_client.update("team-yelling".to_owned(), ts.to_owned(), text).await?; }
+        None => {
+            let slack_id = slack_client.post_message("team-yelling".to_owned(), text, None).await;
+            println!("Slack TS {slack_id:?}");
+            meeting.slack_id = slack_id.ok();
+        }
+    }
+    println!("Update succeeded!");
     meeting.last_slacked_meeting_name = Some(db_page.meeting_name().to_owned());
     meeting.last_slacked_summary = db_page.ai_summary().map(|s| s.to_owned());
+    Ok(())
 }
 
 fn gc(store: &spin_sdk::key_value::Store, notion_id: &str) {

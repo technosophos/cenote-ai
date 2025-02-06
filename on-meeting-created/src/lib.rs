@@ -1,10 +1,10 @@
-use cenote_dtos::{MeetingInProgress, WebhookBody, WebhookData};
+use cenote_dtos::{slack, MeetingInProgress, WebhookBody, WebhookData};
 use spin_sdk::http::{IntoResponse, Request, Response};
 use spin_sdk::http_component;
 
 /// A simple Spin HTTP component.
 #[http_component]
-fn handle_on_meeting_created(req: Request) -> anyhow::Result<impl IntoResponse> {
+async fn handle_on_meeting_created(req: Request) -> anyhow::Result<impl IntoResponse> {
     let body = String::from_utf8_lossy(req.body());
     // println!("PAGE CREATED: Received webhook with body {body}");
     let body: WebhookBody = serde_json::from_str(&body)?;
@@ -14,10 +14,13 @@ fn handle_on_meeting_created(req: Request) -> anyhow::Result<impl IntoResponse> 
     let notion_id = body.id();
 
     println!("CREATING A SLACK MESSAGE with meeting name {}", body.meeting_name());
+    let slack_client = slack::SlackClient::from_variable()?;
+    let slack_id = slack_client.post_message("team-yelling".to_owned(), body.meeting_name().to_owned(), None).await;
+    println!("MESSAGE CREATED: ts = {slack_id:?}");
 
     let mtg_record = MeetingInProgress {
         notion_id: notion_id.to_owned(),
-        slack_id: None,
+        slack_id: slack_id.ok(),
         last_edited_time: body.last_edited_time().to_owned(),
         url: body.url().to_owned(),
         last_slacked_meeting_name: Some(body.meeting_name().to_owned()),
