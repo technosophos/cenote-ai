@@ -89,7 +89,10 @@ fn update_or_gc(store: &spin_sdk::key_value::Store, notion_id: &str, notion_db: 
     //     return Ok(());
     // }
 
-    if db_page.ai_summary() == meeting.last_slacked_summary.as_deref() && Some(db_page.meeting_name()) == meeting.last_slacked_summary.as_deref() {
+    let unchanged = db_page.ai_summary() == meeting.last_slacked_summary.as_deref() &&
+        Some(db_page.meeting_name()) == meeting.last_slacked_meeting_name.as_deref();
+
+    if unchanged {
         // Nothing to update
         return Ok(());
     }
