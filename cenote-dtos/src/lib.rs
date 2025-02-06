@@ -5,6 +5,10 @@ pub struct MeetingInProgress {
     pub slack_id: Option<String>,
     pub last_edited_time: String,
     pub url: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub last_slacked_meeting_name: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub last_slacked_summary: Option<String>,
 }
 
 #[derive(serde::Deserialize)]

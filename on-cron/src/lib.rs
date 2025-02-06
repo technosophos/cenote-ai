@@ -5,7 +5,7 @@ use spin_sdk::http_component;
 /// A simple Spin HTTP component.
 #[http_component]
 async fn handle_on_cron(_req: Request) -> anyhow::Result<impl IntoResponse> {
-    println!("Handling cron callback");
+    // println!("Handling cron callback");
 
     let notion_db = match get_notion_db().await {
         Ok(db) => db,
@@ -89,6 +89,11 @@ fn update_or_gc(store: &spin_sdk::key_value::Store, notion_id: &str, notion_db: 
     //     return Ok(());
     // }
 
+    if db_page.ai_summary() == meeting.last_slacked_summary.as_deref() && Some(db_page.meeting_name()) == meeting.last_slacked_summary.as_deref() {
+        // Nothing to update
+        return Ok(());
+    }
+
     // IF WE ARE HERE THEN THERE IS NEW STUFF!
     update_slack(&mut meeting, &db_page);
 
@@ -99,8 +104,10 @@ fn update_or_gc(store: &spin_sdk::key_value::Store, notion_id: &str, notion_db: 
     Ok(())
 }
 
-fn update_slack(_meeting: &mut MeetingInProgress, db_page: &WebhookData) {
+fn update_slack(meeting: &mut MeetingInProgress, db_page: &WebhookData) {
     println!("UPDATING SLACK with meeting name {} and summary {:?}", db_page.meeting_name(), db_page.ai_summary());
+    meeting.last_slacked_meeting_name = Some(db_page.meeting_name().to_owned());
+    meeting.last_slacked_summary = db_page.ai_summary().map(|s| s.to_owned());
 }
 
 fn gc(store: &spin_sdk::key_value::Store, notion_id: &str) {
