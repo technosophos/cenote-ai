@@ -9,6 +9,7 @@ version = "0.1.0"
 [variables]
 notion_db_id = { required = true, secret = true }
 notion_api_key = { required = true, secret = true }
+slack_token = { required = true, secret = true }
 
 [[trigger.http]]
 route = "/meeting-created"
