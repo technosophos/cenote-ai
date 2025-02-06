@@ -35,21 +35,34 @@ async fn handle_on_cron(_req: Request) -> anyhow::Result<impl IntoResponse> {
 async fn get_notion_db() -> anyhow::Result<NotionDb> {
     // Get the props from Notion
     /*
-    curl -X POST 'https://api.notion.com/v1/databases/190ecc8b718180b7bc41e66368941285/query' \
-  -H 'Authorization: Bearer '"$NOTION_API_KEY"'' \
-  -H 'Notion-Version: 2022-06-28' \
-  -H "Content-Type: application/json" \
---data '...'
-     */
-    let mut request = spin_sdk::http::RequestBuilder::new(spin_sdk::http::Method::Post, format!("https://api.notion.com/v1/databases/{}/query", spin_sdk::variables::get("notion_db_id")?));
-    request.header("Authorization", format!("Bearer {}", spin_sdk::variables::get("notion_api_key")?));
+        curl -X POST 'https://api.notion.com/v1/databases/190ecc8b718180b7bc41e66368941285/query' \
+      -H 'Authorization: Bearer '"$NOTION_API_KEY"'' \
+      -H 'Notion-Version: 2022-06-28' \
+      -H "Content-Type: application/json" \
+    --data '...'
+         */
+    let mut request = spin_sdk::http::RequestBuilder::new(
+        spin_sdk::http::Method::Post,
+        format!(
+            "https://api.notion.com/v1/databases/{}/query",
+            spin_sdk::variables::get("notion_db_id")?
+        ),
+    );
+    request.header(
+        "Authorization",
+        format!("Bearer {}", spin_sdk::variables::get("notion_api_key")?),
+    );
     request.header("Notion-Version", "2022-06-28");
     request.header("Content-Type", "application/json");
     let response: spin_sdk::http::Response = spin_sdk::http::send(request.build()).await?;
     if *(response.status()) == 200 {
         Ok(serde_json::from_slice(response.body())?)
     } else {
-        Err(anyhow::anyhow!("response error status {} {}", response.status(), String::from_utf8_lossy(response.body())))
+        Err(anyhow::anyhow!(
+            "response error status {} {}",
+            response.status(),
+            String::from_utf8_lossy(response.body())
+        ))
     }
 }
 
@@ -58,7 +71,11 @@ struct NotionDb {
     results: Vec<WebhookData>,
 }
 
-async fn update_or_gc(store: &spin_sdk::key_value::Store, notion_id: &str, notion_db: &NotionDb) -> anyhow::Result<()> {
+async fn update_or_gc(
+    store: &spin_sdk::key_value::Store,
+    notion_id: &str,
+    notion_db: &NotionDb,
+) -> anyhow::Result<()> {
     let mut meeting: MeetingInProgress = match store.get_json(notion_id) {
         Err(e) => {
             gc(store, notion_id);
@@ -89,8 +106,8 @@ async fn update_or_gc(store: &spin_sdk::key_value::Store, notion_id: &str, notio
     //     return Ok(());
     // }
 
-    let unchanged = db_page.ai_summary() == meeting.last_slacked_summary.as_deref() &&
-        Some(db_page.meeting_name()) == meeting.last_slacked_meeting_name.as_deref();
+    let unchanged = db_page.ai_summary() == meeting.last_slacked_summary.as_deref()
+        && Some(db_page.meeting_name()) == meeting.last_slacked_meeting_name.as_deref();
 
     if unchanged {
         // Nothing to update
@@ -107,14 +124,32 @@ async fn update_or_gc(store: &spin_sdk::key_value::Store, notion_id: &str, notio
     Ok(())
 }
 
-async fn update_slack(meeting: &mut MeetingInProgress, db_page: &WebhookData) -> anyhow::Result<()> {
-    println!("UPDATING SLACK with meeting name {} and summary {:?}", db_page.meeting_name(), db_page.ai_summary());
+async fn update_slack(
+    meeting: &mut MeetingInProgress,
+    db_page: &WebhookData,
+) -> anyhow::Result<()> {
+    println!(
+        "UPDATING SLACK with meeting name {} and summary {:?}",
+        db_page.meeting_name(),
+        db_page.ai_summary()
+    );
     let slack_client = cenote_dtos::slack::SlackClient::from_variable()?;
-    let text = format!("{}\n\n{}", db_page.meeting_name(), db_page.ai_summary().unwrap_or_default());
+    let text = format!(
+        "[{}]({})\n\n{}",
+        db_page.meeting_name(),
+        meeting.url,
+        db_page.ai_summary().unwrap_or_default()
+    );
     match meeting.slack_id.as_ref() {
-        Some(ts) => { slack_client.update("C08BV2B875J".to_owned(), ts.to_owned(), text).await?; }
+        Some(ts) => {
+            slack_client
+                .update("C08BV2B875J".to_owned(), ts.to_owned(), text)
+                .await?;
+        }
         None => {
-            let slack_id = slack_client.post_message("C08BV2B875J".to_owned(), text, None).await;
+            let slack_id = slack_client
+                .post_message("C08BV2B875J".to_owned(), text, None)
+                .await;
             println!("Slack TS {slack_id:?}");
             meeting.slack_id = slack_id.ok();
         }

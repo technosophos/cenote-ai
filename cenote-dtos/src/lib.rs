@@ -19,7 +19,7 @@ pub struct WebhookBody {
     pub data: WebhookData,
 }
 
-#[derive(serde::Deserialize)]
+#[derive(Debug, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct WebhookData {
     pub id: String,
@@ -44,7 +44,8 @@ impl WebhookData {
             .get("Meeting Name")
             .and_then(|v| v.get("title"))
             .and_then(|v| v.as_array())
-            .and_then(|v| v[0].get("plain_text"))
+            .and_then(|v| v.first())
+            .and_then(|v| v.get("plain_text"))
             .and_then(|v| v.as_str())
             .unwrap_or("Meeting notes")
     }

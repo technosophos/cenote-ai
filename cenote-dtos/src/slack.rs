@@ -18,12 +18,12 @@ impl SlackClient {
     pub async fn post_message(
         &self,
         channel: String,
-        text: String,
+        markdown_text: String,
         thread_ts: Option<String>,
     ) -> anyhow::Result<String> {
         let req = RequestBody {
             channel,
-            text,
+            markdown_text,
             thread_ts,
             ..Default::default()
         };
@@ -36,11 +36,11 @@ impl SlackClient {
         &self,
         channel: String,
         message_ts: String,
-        text: String,
+        markdown_text: String,
     ) -> anyhow::Result<()> {
         let req = RequestBody {
             channel,
-            text,
+            markdown_text,
             ts: Some(message_ts),
             ..Default::default()
         };
@@ -70,7 +70,7 @@ impl SlackClient {
 #[derive(Default, Serialize)]
 struct RequestBody {
     channel: String,
-    text: String,
+    markdown_text: String,
     // Message to update
     #[serde(skip_serializing_if = "Option::is_none")]
     ts: Option<String>,
